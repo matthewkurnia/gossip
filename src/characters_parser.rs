@@ -1,27 +1,24 @@
+use std::collections::HashSet;
+
 use pest::Parser;
 use pest_derive::Parser;
 
 #[derive(Parser)]
 #[grammar = "grammars/characters.pest"]
-pub struct CharactersParser;
+struct CharactersParser;
 
-pub fn get_tokens(contents: &String) {
-    let test = CharactersParser::parse(Rule::names, &contents)
-        .expect("Parsing error.")
+pub fn get_characters(contents: &String, characters: &mut HashSet<String>) {
+    let names = CharactersParser::parse(Rule::names, &contents)
+        .expect("Unsuccessful parse of characters file.")
         .next()
-        .unwrap();
+        .unwrap(); // According to https://pest.rs/book/examples/csv.html never fails
 
-    for t in test.into_inner() {
-        match t.as_rule() {
-            Rule::names => {
-                for name in t.into_inner() {
-                    println!("{}", name.as_str());
-                }
-            }
+    for name in names.into_inner() {
+        match name.as_rule() {
             Rule::name => {
-                println!("{}", t.as_str());
+                characters.insert(name.as_str().to_string());
             }
-            _ => println!("ASDAFSDASDF"),
+            _ => {}
         }
     }
 }

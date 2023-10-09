@@ -1,8 +1,8 @@
-use pest::Parser;
-use walkdir::WalkDir;
+use std::collections::HashSet;
 
 mod characters_parser;
 mod reader;
+mod variables_parser;
 
 fn main() {
     let mut files = reader::read_from_directory(".".to_owned());
@@ -10,6 +10,13 @@ fn main() {
     for file in &files {
         println!("{}", file.file_path.to_string_lossy());
     }
-    let test = &files.pop();
-    characters_parser::get_tokens(&test.as_ref().unwrap().contents);
+
+    let unparsed_characters = files.pop().expect("No .character file found.").contents;
+    let mut characters = HashSet::new();
+    characters_parser::get_characters(&unparsed_characters, &mut characters);
+
+    for character in &characters {
+        println!("{}", character);
+    }
+    println!("{}", (characters.contains("Alicea")).to_string());
 }

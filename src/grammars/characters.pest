@@ -2,5 +2,4 @@ WHITESPACE = _{ " " }
 COMMENT    = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
 name  = ${ (CASED_LETTER | " ")+ }
-names =  { NEWLINE* ~ (name ~ NEWLINE+)* }
-file  =  { SOI ~ (names ~ ("\r\n" | "\n"))* ~ EOI }
+names =  { SOI ~ NEWLINE* ~ name ~ (NEWLINE+ ~ name)* ~ NEWLINE* ~ EOI }
