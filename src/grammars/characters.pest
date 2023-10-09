@@ -2,4 +2,4 @@ WHITESPACE = _{ " " }
 COMMENT    = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
 name  = ${ (CASED_LETTER | " ")+ }
-names =  { SOI ~ NEWLINE* ~ name ~ (NEWLINE+ ~ name)* ~ NEWLINE* ~ EOI }
+names =  { SOI ~ NEWLINE* ~ name? ~ (NEWLINE+ ~ name)* ~ NEWLINE* ~ EOI }

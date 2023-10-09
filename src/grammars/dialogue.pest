@@ -10,10 +10,9 @@ wave_text   = { "@wave[" ~ text ~ "]" }
 shake_text  = { "@text[" ~ text ~ "]" }
 styled_text = { text | bold_text | italic_text | wave_text | shake_text }
 
-empty_line   = { NEWLINE }
-regular_line = { identifier ~ ":" ~ styled_text ~ NEWLINE }
-option       = { "?>" ~ styled_text ~ NEWLINE ~ "->" ~ identifier }
-options      = { option+ }
+regular_line = { identifier ~ ":" ~ styled_text }
+option       = { "?>" ~ styled_text ~ "->" ~ identifier }
+options      = { option ~ (NEWLINE+ ~ option)* }
 option_line  = { identifier ~ ":" ~ NEWLINE ~ options }
 
 variable_identifier = { XID_CONTINUE }
@@ -28,8 +27,8 @@ set_line = { set_enum | set_int | inc_int | dec_int }
 
 signal_line = { "signal" ~ variable_identifier }
 
-line               = { regular_line | option_line | set_line | signal_line }
-dialogue_begin     = { "# begin" }
-conversation_title = { (("# " ~ text) | dialogue_begin) ~ NEWLINE }
-conversation       = { conversation_title ~ (empty_line* ~ line)+ }
-conversations      = { (empty_line* ~ conversation)+ ~ empty_line* }
+line           = { regular_line | option_line | set_line | signal_line }
+dialogue_begin = { "#>" ~ "begin" }
+fragment_title = { (("#>" ~ text) | dialogue_begin) }
+fragment       = { fragment_title ~ (NEWLINE* ~ line)+ }
+fragments      = { SOI ~ NEWLINE* ~ fragment? ~ (NEWLINE+ ~ fragment)+ ~ NEWLINE* ~ EOI }
