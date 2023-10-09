@@ -1,0 +1,14 @@
+WHITESPACE = _{ " " }
+COMMENT    = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+identifier = { XID_CONTINUE }
+
+enum_type       = { identifier ~ ("|" ~ identifier)* }
+enum_value      = { identifier }
+enum_definition = { identifier ~ ":" ~ enum_type ~ "=" ~ enum_value }
+
+int_type       = { "int" }
+int_value      = { NUMBER }
+int_definition = { identifier ~ ":" ~ int_type ~ "=" ~ int_value }
+
+definition = { enum_definition | int_definition }

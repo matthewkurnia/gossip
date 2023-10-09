@@ -1,14 +1,15 @@
+use pest::Parser;
 use walkdir::WalkDir;
 
-mod lexer;
+mod characters_parser;
 mod reader;
 
 fn main() {
-    let files = reader::read_from_directory(".".to_owned());
-    let tokenised_files = lexer::get_tokenised_files(files);
-    for t_file in tokenised_files {
-        for token in t_file.tokens {
-            println!("{}", token.slice);
-        }
+    let mut files = reader::read_from_directory(".".to_owned());
+    files.sort_by(|a, b| reader::compare_file_types(a.file_type, b.file_type));
+    for file in &files {
+        println!("{}", file.file_path.to_string_lossy());
     }
+    let test = &files.pop();
+    characters_parser::get_tokens(&test.as_ref().unwrap().contents);
 }

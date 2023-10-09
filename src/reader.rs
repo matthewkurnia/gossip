@@ -1,15 +1,16 @@
-use std::{fs, path::Path};
+use std::{cmp::Ordering, fs, path::Path};
 use walkdir::WalkDir;
 
+#[derive(Clone, Copy)]
 pub enum FileType {
-    Characters,
-    Variables,
-    Dialogue,
-    Unidentified,
+    Characters = 3,
+    Variables = 2,
+    Dialogue = 1,
+    Unidentified = 0,
 }
 
 pub struct GossipFile {
-    pub file_path: String,
+    pub file_path: Box<Path>,
     pub file_type: FileType,
     pub contents: String,
 }
@@ -32,7 +33,7 @@ fn get_file_type(file_name: &Path) -> FileType {
     }
 }
 
-pub fn read_from_directory(path: String) -> impl Iterator<Item = GossipFile> {
+pub fn read_from_directory(path: String) -> Vec<GossipFile> {
     return WalkDir::new(path)
         .into_iter()
         .filter_map(|e| e.ok())
@@ -42,7 +43,7 @@ pub fn read_from_directory(path: String) -> impl Iterator<Item = GossipFile> {
                 match file_type {
                     FileType::Unidentified => None,
                     _ => Some(GossipFile {
-                        file_path: e.path().to_string_lossy().to_string(),
+                        file_path: Box::from(e.path()),
                         file_type,
                         contents: fs::read_to_string(e.path()).expect(&format!(
                             "WARNING! File {} cannot be read. Ignoring.",
@@ -53,5 +54,10 @@ pub fn read_from_directory(path: String) -> impl Iterator<Item = GossipFile> {
             } else {
                 None
             }
-        });
+        })
+        .collect();
+}
+
+pub fn compare_file_types(a: FileType, b: FileType) -> Ordering {
+    return (a as u8).cmp(&(b as u8));
 }
