@@ -1,7 +1,6 @@
-use std::collections::HashSet;
-
 use pest::Parser;
 use pest_derive::Parser;
+use std::collections::HashSet;
 
 #[derive(Parser)]
 #[grammar = "grammars/characters.pest"]
@@ -16,7 +15,7 @@ pub fn get_characters(contents: &String, characters: &mut HashSet<String>) {
     for name in names.into_inner() {
         match name.as_rule() {
             Rule::name => {
-                characters.insert(name.as_str().to_string());
+                characters.insert(name.as_str().to_owned());
             }
             _ => {}
         }

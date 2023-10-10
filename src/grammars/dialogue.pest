@@ -8,27 +8,25 @@ bold_text   = { "@bold[" ~ text ~ "]" }
 italic_text = { "@italic[" ~ text ~ "]" }
 wave_text   = { "@wave[" ~ text ~ "]" }
 shake_text  = { "@text[" ~ text ~ "]" }
-styled_text = { text | bold_text | italic_text | wave_text | shake_text }
+styled_text = { (text | bold_text | italic_text | wave_text | shake_text)+ }
 
 regular_line = { identifier ~ ":" ~ styled_text }
-option       = { "?>" ~ styled_text ~ "->" ~ identifier }
-options      = { option ~ (NEWLINE+ ~ option)* }
-option_line  = { identifier ~ ":" ~ NEWLINE ~ options }
 
-variable_identifier = { XID_CONTINUE }
+choice      = { "?>" ~ styled_text ~ "=>" ~ identifier }
+choice_line = { identifier ~ ":" ~ NEWLINE ~ choice ~ (NEWLINE+ ~ choice)* }
+
+variable_identifier = { XID_CONTINUE+ }
 enum_value          = { variable_identifier }
-int_value           = { NUMBER }
+int_value           = { NUMBER+ }
 
-set_enum = { "set" ~ variable_identifier ~ enum_value }
-set_int  = { "set" ~ variable_identifier ~ int_value }
-inc_int  = { "inc" ~ variable_identifier ~ int_value }
-dec_int  = { "dec" ~ variable_identifier ~ int_value }
-set_line = { set_enum | set_int | inc_int | dec_int }
+set_enum = { variable_identifier ~ "=" ~ enum_value }
+set_int  = { variable_identifier ~ "=" ~ int_value }
+inc_int  = { variable_identifier ~ "+=" ~ int_value }
+dec_int  = { variable_identifier ~ "-=" ~ int_value }
+set_line = { set_int | set_enum | inc_int | dec_int }
 
-signal_line = { "signal" ~ variable_identifier }
+event_line = { "event" ~ variable_identifier }
 
-line           = { regular_line | option_line | set_line | signal_line }
-dialogue_begin = { "#>" ~ "begin" }
-fragment_title = { (("#>" ~ text) | dialogue_begin) }
-fragment       = { fragment_title ~ (NEWLINE* ~ line)+ }
-fragments      = { SOI ~ NEWLINE* ~ fragment? ~ (NEWLINE+ ~ fragment)+ ~ NEWLINE* ~ EOI }
+line      = { choice_line | regular_line | set_line | event_line }
+fragment  = { "#>" ~ identifier ~ (NEWLINE+ ~ line)+ }
+fragments = { SOI ~ NEWLINE* ~ fragment? ~ (NEWLINE+ ~ fragment)* ~ NEWLINE* ~ EOI }

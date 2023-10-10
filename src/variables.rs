@@ -1,18 +1,17 @@
-use std::collections::HashMap;
-
 use pest::Parser;
 use pest_derive::Parser;
+use std::collections::HashMap;
 
 #[derive(Parser)]
 #[grammar = "grammars/variables.pest"]
 struct VariablesParser;
 
-pub enum VariableType {
+pub enum Variable {
     Int(i32),
     Enum(Vec<String>, String),
 }
 
-pub fn get_variables(contents: &String, variables: &mut HashMap<String, VariableType>) {
+pub fn get_variables(contents: &String, variables: &mut HashMap<String, Variable>) {
     let definitions = VariablesParser::parse(Rule::definitions, &contents)
         .expect("Unsuccessful parse of variables file.")
         .next()
@@ -34,8 +33,8 @@ pub fn get_variables(contents: &String, variables: &mut HashMap<String, Variable
                         let value = def_inner.next().unwrap();
 
                         variables.insert(
-                            identifier.as_str().to_string(),
-                            VariableType::Int(value.as_str().parse::<i32>().unwrap()),
+                            identifier.as_str().to_owned(),
+                            Variable::Int(value.as_str().parse::<i32>().unwrap()),
                         );
                     }
                     Rule::enum_definition => {
@@ -44,17 +43,15 @@ pub fn get_variables(contents: &String, variables: &mut HashMap<String, Variable
 
                         let identifier = def_inner.next().unwrap();
                         let mut values = Vec::new();
-                        loop {
-                            match def_inner.next() {
-                                Some(value) => values.push(value.as_str().to_string()),
-                                None => break,
-                            }
+
+                        for value in def_inner {
+                            values.push(value.as_str().to_owned());
                         }
                         let current_value = values[0].clone();
 
                         variables.insert(
-                            identifier.as_str().to_string(),
-                            VariableType::Enum(values, current_value),
+                            identifier.as_str().to_owned(),
+                            Variable::Enum(values, current_value),
                         );
                     }
                     _ => {}
