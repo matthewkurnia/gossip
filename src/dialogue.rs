@@ -63,9 +63,11 @@ pub fn get_dialogue(
                 let fragment_title = fragment.next().unwrap();
                 if dialogue.contains_key(fragment_title.as_str()) {
                     panic!(
-                        "Error: {} contains duplicate dialogue fragment titles! ({})",
+                        "Error: {} contains duplicate dialogue fragment titles! ({} at line {} col {})",
                         file_path.to_string_lossy(),
-                        fragment_title.as_str()
+                        fragment_title.as_str(),
+                        fragment_title.line_col().0.to_string(),
+                        fragment_title.line_col().1.to_string(),
                     );
                 }
 
