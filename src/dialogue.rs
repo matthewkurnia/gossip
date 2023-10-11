@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
@@ -26,12 +26,29 @@ fn decorate(text: String, rule: Rule) -> String {
 fn get_bbcode_text(styled_text: Pair<'_, Rule>) -> String {
     let mut bbcode_text = "".to_owned();
     for text in styled_text.into_inner() {
-        bbcode_text.push_str(&decorate(text.as_str().to_owned(), text.as_rule()));
+        bbcode_text += &decorate(text.as_str().to_owned(), text.as_rule());
     }
     return bbcode_text;
 }
 
-pub fn get_dialogue(contents: &String, dialogue: &mut HashMap<String, Vec<Line>>) {
+fn get_localisation_key(file_path: &Path, fragment_title: &str, line_identifier: String) -> String {
+    let mut localisation_key = "".to_owned();
+
+    localisation_key += &file_path.to_string_lossy();
+    localisation_key += " ";
+    localisation_key += fragment_title;
+    localisation_key += " ";
+    localisation_key += &line_identifier;
+
+    return localisation_key;
+}
+
+pub fn get_dialogue(
+    contents: &String,
+    dialogue: &mut HashMap<String, Vec<Line>>,
+    localisation_map: &mut HashMap<String, String>,
+    file_path: &Path,
+) {
     let fragments = DialogueParser::parse(Rule::fragments, &contents)
         .expect("Unsuccessful parse of dialogue file.")
         .next()
@@ -45,6 +62,7 @@ pub fn get_dialogue(contents: &String, dialogue: &mut HashMap<String, Vec<Line>>
 
                 let fragment_title = fragment.next().unwrap();
 
+                let mut line_counter = 0;
                 let mut lines = Vec::new();
                 for line in fragment {
                     match line.as_rule() {
@@ -54,6 +72,7 @@ pub fn get_dialogue(contents: &String, dialogue: &mut HashMap<String, Vec<Line>>
 
                             let identifier = choice_line.next().unwrap();
 
+                            let mut choice_counter = 0;
                             let mut choices = Vec::new();
                             for choice in choice_line {
                                 let mut choice = choice.into_inner();
@@ -62,11 +81,18 @@ pub fn get_dialogue(contents: &String, dialogue: &mut HashMap<String, Vec<Line>>
                                 let styled_text = choice.next().unwrap();
                                 let fragment_identifier = choice.next().unwrap();
 
-                                // TODO: This should point to a line identifier instead of using the text outright.
-                                choices.push((
-                                    get_bbcode_text(styled_text),
-                                    fragment_identifier.as_str().to_owned(),
-                                ));
+                                let localisation_key = get_localisation_key(
+                                    file_path,
+                                    fragment_title.as_str(),
+                                    line_counter.to_string() + " " + &choice_counter.to_string(),
+                                );
+                                let entry = localisation_key.clone();
+
+                                localisation_map
+                                    .insert(localisation_key, get_bbcode_text(styled_text));
+                                choices.push((entry, fragment_identifier.as_str().to_owned()));
+
+                                choice_counter += 1;
                             }
                             lines.push(Line::Choice(identifier.as_str().to_owned(), choices));
                         }
@@ -77,11 +103,15 @@ pub fn get_dialogue(contents: &String, dialogue: &mut HashMap<String, Vec<Line>>
                             let identifier = regular_line.next().unwrap();
                             let styled_text = regular_line.next().unwrap();
 
-                            // TODO: This should point to a line identifier instead of using the text outright.
-                            lines.push(Line::Regular(
-                                identifier.as_str().to_owned(),
-                                get_bbcode_text(styled_text),
-                            ));
+                            let localisation_key = get_localisation_key(
+                                file_path,
+                                fragment_title.as_str(),
+                                line_counter.to_string(),
+                            );
+                            let entry = localisation_key.clone();
+
+                            localisation_map.insert(localisation_key, get_bbcode_text(styled_text));
+                            lines.push(Line::Regular(identifier.as_str().to_owned(), entry));
                         }
                         Rule::set_line => {
                             let set_line = line.into_inner();
@@ -116,6 +146,7 @@ pub fn get_dialogue(contents: &String, dialogue: &mut HashMap<String, Vec<Line>>
                         }
                         _ => {}
                     }
+                    line_counter += 1;
                 }
 
                 dialogue.insert(fragment_title.as_str().to_owned(), lines);

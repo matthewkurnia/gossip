@@ -52,11 +52,17 @@ fn main() {
         _ => println!("{}", cv_warning_message),
     }
 
-    let mut dialogues: Vec<HashMap<String, Vec<dialogue::Line>>> = Vec::new();
+    let mut dialogues = Vec::new();
+    let mut localisation_map = HashMap::new();
     for dialogue_file in files {
         let unparsed_dialogue = dialogue_file.contents;
         let mut dialogue = HashMap::new();
-        dialogue::get_dialogue(&unparsed_dialogue, &mut dialogue);
+        dialogue::get_dialogue(
+            &unparsed_dialogue,
+            &mut dialogue,
+            &mut localisation_map,
+            &dialogue_file.file_path,
+        );
         dialogues.push(dialogue);
     }
 }
