@@ -40,7 +40,11 @@ fn main() {
     }
     let unparsed_variables = variables_file.contents;
     let mut variables = HashMap::new();
-    variables::get_variables(&unparsed_variables, &mut variables);
+    variables::get_variables(
+        &unparsed_variables,
+        &mut variables,
+        &variables_file.file_path,
+    );
 
     if files.is_empty() {
         println!("Warning: No .dialogue files found.");
