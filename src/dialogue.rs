@@ -61,6 +61,13 @@ pub fn get_dialogue(
                 assert!(fragment.len() > 1);
 
                 let fragment_title = fragment.next().unwrap();
+                if dialogue.contains_key(fragment_title.as_str()) {
+                    panic!(
+                        "Error: {} contains duplicate dialogue fragment titles! ({})",
+                        file_path.to_string_lossy(),
+                        fragment_title.as_str()
+                    );
+                }
 
                 let mut line_counter = 0;
                 let mut lines = Vec::new();
