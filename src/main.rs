@@ -65,6 +65,7 @@ fn main() {
             &unparsed_dialogue,
             &mut dialogue,
             &characters,
+            &variables,
             &mut localisation_map,
             &dialogue_file.file_path,
         );

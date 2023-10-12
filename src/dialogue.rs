@@ -1,3 +1,4 @@
+use crate::variables::Variable;
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
 use std::{
@@ -56,11 +57,11 @@ fn check_is_character_valid(character_identifier: &Pair<'_, Rule>, characters: &
         character_identifier.line_col().1.to_string(),
     );
 }
-
 pub fn get_dialogue(
     contents: &String,
     dialogue: &mut HashMap<String, Vec<Line>>,
     characters: &HashSet<String>,
+    variables: &HashMap<String, Variable>,
     localisation_map: &mut HashMap<String, String>,
     file_path: &Path,
 ) {
@@ -177,7 +178,8 @@ pub fn get_dialogue(
                             assert!(set_line.len() == 1);
 
                             let set_line = set_line.last().unwrap();
-                            let operator = match set_line.as_rule() {
+                            let line_type = set_line.as_rule();
+                            let operator = match line_type {
                                 Rule::inc_int => "+=",
                                 Rule::dec_int => "-=",
                                 Rule::set_int | Rule::set_enum | _ => "=",
@@ -185,9 +187,43 @@ pub fn get_dialogue(
 
                             let mut set_line = set_line.into_inner();
                             assert!(set_line.len() == 2);
-                            let variable_identifier = set_line.next().unwrap().as_str();
-                            let value = set_line.next().unwrap().as_str();
+                            let variable_identifier = set_line.next().unwrap();
+                            let value = set_line.next().unwrap();
 
+                            let mut invalid_type = false;
+                            match variables.get(variable_identifier.as_str()) {
+                                Some(Variable::Int(_)) => match line_type {
+                                    Rule::set_enum => invalid_type = true,
+                                    _ => {}
+                                },
+                                Some(Variable::Enum(_, _)) => match line_type {
+                                    Rule::set_int | Rule::inc_int | Rule::dec_int => {
+                                        invalid_type = true
+                                    }
+                                    _ => {}
+                                },
+                                None => {
+                                    panic!(
+                                        "Error: {} refers to an undefined variable! (\"{}\" at line {} col {})",
+                                        file_path.to_string_lossy(),
+                                        variable_identifier.as_str(),
+                                        variable_identifier.line_col().0.to_string(),
+                                        variable_identifier.line_col().1.to_string(),
+                                    );
+                                }
+                            }
+                            if invalid_type {
+                                panic!(
+                                    "Error: {} contains a type mismatch! (\"{}\" at line {} col {})",
+                                    file_path.to_string_lossy(),
+                                    value.as_str(),
+                                    value.line_col().0.to_string(),
+                                    value.line_col().1.to_string(),
+                                );
+                            }
+
+                            let variable_identifier = variable_identifier.as_str();
+                            let value = value.as_str();
                             lines.push(Line::Func(format!(
                                 "func(): GossipVariables.{variable_identifier} {operator} {value}"
                             )));
