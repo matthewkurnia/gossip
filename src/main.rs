@@ -11,9 +11,6 @@ mod variables;
 fn main() {
     let mut files = reader::read_from_directory(".".to_owned());
     files.sort_by(|a, b| reader::compare_file_types(a.file_type, b.file_type));
-    // for file in &files {
-    //     println!("{}", file.file_path.to_string_lossy());
-    // }
 
     let cv_warning_message =
         "Warning: Make sure there are only one characters and one variables file.";
@@ -28,11 +25,6 @@ fn main() {
     let unparsed_characters = characters_file.contents;
     let mut characters = HashSet::new();
     characters::get_characters(&unparsed_characters, &mut characters);
-
-    // for character in &characters {
-    //     println!("{}", character);
-    // }
-    // println!("{}", (characters.contains("Alicea")).to_string());
 
     let variables_file = files
         .pop()
