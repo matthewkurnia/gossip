@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+};
 
 mod characters;
 mod dialogue;
@@ -71,4 +74,7 @@ fn main() {
         );
         dialogues.push(dialogue);
     }
+
+    let _ = fs::remove_dir_all("./gossip_generated");
+    let _ = fs::create_dir("./gossip_generated").unwrap();
 }
