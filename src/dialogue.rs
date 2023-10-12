@@ -1,7 +1,9 @@
-use std::{collections::HashMap, path::Path};
-
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 
 #[derive(Parser)]
 #[grammar = "grammars/dialogue.pest"]
@@ -43,9 +45,22 @@ fn get_localisation_key(file_path: &Path, fragment_title: &str, line_identifier:
     return localisation_key;
 }
 
+fn check_is_character_valid(character_identifier: &Pair<'_, Rule>, characters: &HashSet<String>) {
+    if characters.contains(character_identifier.as_str()) {
+        return;
+    }
+    panic!(
+        "Error: \"{}\" is not a registered character! (line {} col {})",
+        character_identifier.as_str(),
+        character_identifier.line_col().0.to_string(),
+        character_identifier.line_col().1.to_string(),
+    );
+}
+
 pub fn get_dialogue(
     contents: &String,
     dialogue: &mut HashMap<String, Vec<Line>>,
+    characters: &HashSet<String>,
     localisation_map: &mut HashMap<String, String>,
     file_path: &Path,
 ) {
@@ -74,12 +89,14 @@ pub fn get_dialogue(
                 let mut line_counter = 0;
                 let mut lines = Vec::new();
                 for line in fragment {
+                    let line = line.into_inner().last().unwrap();
                     match line.as_rule() {
                         Rule::choice_line => {
                             let mut choice_line = line.into_inner();
                             assert!(choice_line.len() >= 2);
 
-                            let identifier = choice_line.next().unwrap();
+                            let character_identifier = choice_line.next().unwrap();
+                            check_is_character_valid(&character_identifier, characters);
 
                             let mut choice_counter = 0;
                             let mut choices = Vec::new();
@@ -103,13 +120,18 @@ pub fn get_dialogue(
 
                                 choice_counter += 1;
                             }
-                            lines.push(Line::Choice(identifier.as_str().to_owned(), choices));
+                            lines.push(Line::Choice(
+                                character_identifier.as_str().to_owned(),
+                                choices,
+                            ));
                         }
                         Rule::regular_line => {
                             let mut regular_line = line.into_inner();
                             assert!(regular_line.len() == 2);
 
-                            let identifier = regular_line.next().unwrap();
+                            let character_identifier = regular_line.next().unwrap();
+                            check_is_character_valid(&character_identifier, characters);
+
                             let styled_text = regular_line.next().unwrap();
 
                             let localisation_key = get_localisation_key(
@@ -120,7 +142,10 @@ pub fn get_dialogue(
                             let entry = localisation_key.clone();
 
                             localisation_map.insert(localisation_key, get_bbcode_text(styled_text));
-                            lines.push(Line::Regular(identifier.as_str().to_owned(), entry));
+                            lines.push(Line::Regular(
+                                character_identifier.as_str().to_owned(),
+                                entry,
+                            ));
                         }
                         Rule::set_line => {
                             let set_line = line.into_inner();

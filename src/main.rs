@@ -64,6 +64,7 @@ fn main() {
         dialogue::get_dialogue(
             &unparsed_dialogue,
             &mut dialogue,
+            &characters,
             &mut localisation_map,
             &dialogue_file.file_path,
         );
