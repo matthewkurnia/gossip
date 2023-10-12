@@ -69,6 +69,30 @@ pub fn get_dialogue(
         .next()
         .unwrap();
 
+    let mut fragment_titles = HashSet::new();
+    for fragment in fragments.clone().into_inner() {
+        match fragment.as_rule() {
+            Rule::fragment => {
+                let mut fragment = fragment.into_inner();
+                assert!(fragment.len() > 1);
+
+                let fragment_title = fragment.next().unwrap();
+                if fragment_titles.contains(fragment_title.as_str()) {
+                    panic!(
+                        "Error: {} contains duplicate dialogue fragment titles! (\"{}\" at line {} col {})",
+                        file_path.to_string_lossy(),
+                        fragment_title.as_str(),
+                        fragment_title.line_col().0.to_string(),
+                        fragment_title.line_col().1.to_string(),
+                    )
+                }
+
+                fragment_titles.insert(fragment_title.as_str());
+            }
+            _ => {}
+        }
+    }
+
     for fragment in fragments.into_inner() {
         match fragment.as_rule() {
             Rule::fragment => {
@@ -76,15 +100,6 @@ pub fn get_dialogue(
                 assert!(fragment.len() > 1);
 
                 let fragment_title = fragment.next().unwrap();
-                if dialogue.contains_key(fragment_title.as_str()) {
-                    panic!(
-                        "Error: {} contains duplicate dialogue fragment titles! ({} at line {} col {})",
-                        file_path.to_string_lossy(),
-                        fragment_title.as_str(),
-                        fragment_title.line_col().0.to_string(),
-                        fragment_title.line_col().1.to_string(),
-                    );
-                }
 
                 let mut line_counter = 0;
                 let mut lines = Vec::new();
@@ -105,7 +120,17 @@ pub fn get_dialogue(
                                 assert!(choice.len() == 2);
 
                                 let styled_text = choice.next().unwrap();
-                                let fragment_identifier = choice.next().unwrap();
+                                let fragment_title = choice.next().unwrap();
+
+                                if !fragment_titles.contains(fragment_title.as_str()) {
+                                    panic!(
+                                        "Error: {} contains a transition to a non-existent fragment! (\"{}\" at line {} col {})",
+                                        file_path.to_string_lossy(),
+                                        fragment_title.as_str(),
+                                        fragment_title.line_col().0.to_string(),
+                                        fragment_title.line_col().1.to_string(),
+                                    );
+                                }
 
                                 let localisation_key = get_localisation_key(
                                     file_path,
@@ -116,7 +141,7 @@ pub fn get_dialogue(
 
                                 localisation_map
                                     .insert(localisation_key, get_bbcode_text(styled_text));
-                                choices.push((entry, fragment_identifier.as_str().to_owned()));
+                                choices.push((entry, fragment_title.as_str().to_owned()));
 
                                 choice_counter += 1;
                             }
