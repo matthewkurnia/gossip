@@ -1,4 +1,5 @@
 use crate::variables::Variable;
+use heck::{ToPascalCase, ToShoutySnakeCase};
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
 use std::{
@@ -18,10 +19,10 @@ pub enum Line {
 
 fn decorate(text: String, rule: Rule) -> String {
     return match rule {
-        Rule::bold_text => format!("[b]{text}[/b]"),
-        Rule::italic_text => format!("[i]{text}[/i]"),
-        Rule::wave_text => format!("[wave amp=50.0 freq=5.0 connected=1]{{{text}}}[/wave]"),
-        Rule::shake_text => format!("[shake rate=20.0 level=5 connected=1]{{{text}}}[/shake]"),
+        Rule::bold_text => format!("[b]{}[/b]", text),
+        Rule::italic_text => format!("[i]{}[/i]", text),
+        Rule::wave_text => format!("[wave amp=50.0 freq=5.0 connected=1]{{{}}}[/wave]", text),
+        Rule::shake_text => format!("[shake rate=20.0 level=5 connected=1]{{{}}}[/shake]", text),
         _ => text,
     };
 }
@@ -182,7 +183,8 @@ pub fn get_dialogue(
                             let operator = match line_type {
                                 Rule::inc_int => "+=",
                                 Rule::dec_int => "-=",
-                                Rule::set_int | Rule::set_enum | _ => "=",
+                                Rule::set_enum => "=",
+                                Rule::set_int | _ => "=",
                             };
 
                             let mut set_line = set_line.into_inner();
@@ -196,11 +198,15 @@ pub fn get_dialogue(
                                     Rule::set_enum => invalid_type = true,
                                     _ => {}
                                 },
-                                Some(Variable::Enum(_, _)) => match line_type {
+                                Some(Variable::Enum(possible_values, _)) => match line_type {
                                     Rule::set_int | Rule::inc_int | Rule::dec_int => {
                                         invalid_type = true
                                     }
-                                    _ => {}
+                                    _ => {
+                                        invalid_type = invalid_type
+                                            || possible_values
+                                                .contains(&value.as_str().to_shouty_snake_case());
+                                    }
                                 },
                                 None => {
                                     panic!(
@@ -223,9 +229,18 @@ pub fn get_dialogue(
                             }
 
                             let variable_identifier = variable_identifier.as_str();
-                            let value = value.as_str();
+                            let value = match line_type {
+                                Rule::set_enum => {
+                                    format!(
+                                        "GossipVariables.{}.",
+                                        variable_identifier.to_pascal_case()
+                                    ) + &value.as_str().to_shouty_snake_case()
+                                }
+                                _ => value.as_str().to_shouty_snake_case(),
+                            };
                             lines.push(Line::Func(format!(
-                                "func(): GossipVariables.{variable_identifier} {operator} {value}"
+                                "func(): GossipVariables.{} {} {}",
+                                variable_identifier, operator, value
                             )));
                         }
                         Rule::event_line => {
@@ -236,7 +251,8 @@ pub fn get_dialogue(
                             let event_identifier = event_line.last().unwrap();
 
                             lines.push(Line::Func(format!(
-                                "func(): GossipEvents.event.emit(\"{event_identifier}\")"
+                                "func(): Gossip.event.emit(\"{}\")",
+                                event_identifier.as_str()
                             )));
                         }
                         _ => {}

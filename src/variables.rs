@@ -55,16 +55,30 @@ pub fn get_variables(
                         );
                     }
                     Rule::enum_definition => {
-                        let mut values = Vec::new();
+                        let values: Vec<String> = def_inner
+                            .next()
+                            .unwrap()
+                            .into_inner()
+                            .map(|v| v.as_str().to_owned())
+                            .collect();
 
-                        for value in def_inner {
-                            values.push(value.as_str().to_owned());
+                        let initial_value = def_inner.next().unwrap();
+
+                        if !values.contains(&initial_value.as_str().to_owned()) {
+                            panic!(
+                                "Error: {} has an invalid initialisation! ({} at line {} col {})",
+                                file_path.to_string_lossy(),
+                                initial_value.as_str(),
+                                initial_value.line_col().0.to_string(),
+                                initial_value.line_col().1.to_string()
+                            );
                         }
-                        let current_value = values[0].clone();
+
+                        let initial_value = initial_value.as_str().to_owned();
 
                         variables.insert(
                             identifier.as_str().to_owned(),
-                            Variable::Enum(values, current_value),
+                            Variable::Enum(values, initial_value),
                         );
                     }
                     _ => {}

@@ -3,10 +3,14 @@ use std::{
     fs,
 };
 
+use heck::ToPascalCase;
+
 mod characters;
+mod code_generator;
 mod dialogue;
 mod reader;
 mod variables;
+mod writer;
 
 fn main() {
     let mut files = reader::read_from_directory(".".to_owned());
@@ -64,9 +68,23 @@ fn main() {
             &mut localisation_map,
             &dialogue_file.file_path,
         );
-        dialogues.push(dialogue);
+        let class_name = dialogue_file
+            .file_path
+            .with_extension("")
+            .to_string_lossy()
+            .to_pascal_case();
+        dialogues.push((class_name, dialogue));
     }
 
-    let _ = fs::remove_dir_all("./gossip_generated");
-    let _ = fs::create_dir("./gossip_generated").unwrap();
+    println!("{}", code_generator::generate_gossip_code());
+    println!("{}", code_generator::generate_variables_code(&variables));
+    for (class_name, dialogue) in dialogues {
+        println!(
+            "{}",
+            code_generator::generate_dialogue_code(class_name, &dialogue)
+        );
+    }
+
+    // fs::remove_dir_all("./gossip_generated").expect("Failed flushing gossip_generated directory.");
+    // fs::create_dir("./gossip_generated").expect("Failed creating gossip_generated directory.");
 }

@@ -3,8 +3,8 @@ COMMENT    = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
 identifier = { XID_CONTINUE+ }
 
-enum_value      = { identifier ~ ("|" ~ identifier)* }
-enum_definition = { identifier ~ "=" ~ enum_value }
+enum_type       = { identifier ~ ("|" ~ identifier)* }
+enum_definition = { identifier ~ ":" ~ enum_type ~ "=" ~ identifier }
 
 int_value      = { NUMBER+ }
 int_definition = { identifier ~ "=" ~ int_value }
