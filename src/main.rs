@@ -1,9 +1,5 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-};
-
 use heck::ToPascalCase;
+use std::collections::{HashMap, HashSet};
 
 mod characters;
 mod code_generator;
@@ -76,15 +72,17 @@ fn main() {
         dialogues.push((class_name, dialogue));
     }
 
-    println!("{}", code_generator::generate_gossip_code());
-    println!("{}", code_generator::generate_variables_code(&variables));
+    writer::initialise_directory();
+    writer::write_localisation_csv(localisation_map);
+    writer::write_gdscript("Gossip".to_owned(), code_generator::generate_gossip_code());
+    writer::write_gdscript(
+        "GossipVariables".to_owned(),
+        code_generator::generate_variables_code(&variables),
+    );
     for (class_name, dialogue) in dialogues {
-        println!(
-            "{}",
-            code_generator::generate_dialogue_code(class_name, &dialogue)
+        writer::write_gdscript(
+            class_name.clone(),
+            code_generator::generate_dialogue_code(class_name, &dialogue),
         );
     }
-
-    // fs::remove_dir_all("./gossip_generated").expect("Failed flushing gossip_generated directory.");
-    // fs::create_dir("./gossip_generated").expect("Failed creating gossip_generated directory.");
 }
