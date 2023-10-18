@@ -53,7 +53,7 @@ pub fn generate_dialogue_code(class_name: String, dialogue: &HashMap<String, Vec
                 Line::Regular(character_identifier, localisation_key) => {
                     dialogue_code += "\t\t\t\"type\": Gossip.LineType.REGULAR,\n";
                     dialogue_code += &format!("\t\t\t\"speaker\": \"{}\",\n", character_identifier);
-                    dialogue_code += &format!("\t\t\t\"contents\": {},\n", localisation_key);
+                    dialogue_code += &format!("\t\t\t\"contents\": \"{}\",\n", localisation_key);
                 }
                 Line::Choice(character_identifier, choices) => {
                     dialogue_code += "\t\t\t\"type\": Gossip.LineType.CHOICE,\n";
@@ -62,8 +62,9 @@ pub fn generate_dialogue_code(class_name: String, dialogue: &HashMap<String, Vec
                     for (localisation_key, fragment_title) in choices {
                         dialogue_code += "\t\t\t\t{\n";
                         dialogue_code +=
-                            &format!("\t\t\t\t\t\"contents\": \"{}\"\n", localisation_key);
-                        dialogue_code += &format!("\t\t\t\t\t\"target\": \"{}\"\n", fragment_title);
+                            &format!("\t\t\t\t\t\"contents\": \"{}\",\n", localisation_key);
+                        dialogue_code +=
+                            &format!("\t\t\t\t\t\"target\": \"{}\",\n", fragment_title);
                         dialogue_code += "\t\t\t\t},\n";
                     }
                     dialogue_code += "\t\t\t],\n";

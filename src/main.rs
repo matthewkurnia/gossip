@@ -85,4 +85,6 @@ fn main() {
             code_generator::generate_dialogue_code(class_name, &dialogue),
         );
     }
+
+    println!("Success!");
 }
