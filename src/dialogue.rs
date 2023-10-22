@@ -38,7 +38,7 @@ fn get_bbcode_text(styled_text: Pair<'_, Rule>) -> String {
 fn get_localisation_key(file_path: &Path, fragment_title: &str, line_identifier: String) -> String {
     let mut localisation_key = "".to_owned();
 
-    localisation_key += &file_path.to_string_lossy();
+    localisation_key += &file_path.to_string_lossy().replace("\\", "/");
     localisation_key += " ";
     localisation_key += fragment_title;
     localisation_key += " ";

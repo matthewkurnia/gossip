@@ -14,6 +14,8 @@ pub fn initialise_directory() {
         },
     }
     fs::create_dir("./gossip_generated").expect("Failed creating gossip_generated directory.");
+
+    println!("Generated directory ./gossip_generated");
 }
 
 pub fn write_localisation_csv(localisation_map: HashMap<String, String>) {
@@ -27,10 +29,14 @@ pub fn write_localisation_csv(localisation_map: HashMap<String, String>) {
         ));
     }
     writer.flush().expect("CSV writer flush error.");
+
+    println!("Generated translation.csv");
 }
 
 pub fn write_gdscript(class_name: String, contents: String) {
     let file_name = class_name.to_snake_case() + ".gd";
     fs::write("./gossip_generated/".to_owned() + &file_name, contents)
         .expect(&format!("Unable to write {}", file_name));
+
+    println!("Generated {}", file_name);
 }

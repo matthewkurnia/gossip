@@ -9,6 +9,8 @@ mod variables;
 mod writer;
 
 fn main() {
+    println!("Compiling your gossip project...");
+
     let mut files = reader::read_from_directory(".".to_owned());
     files.sort_by(|a, b| reader::compare_file_types(a.file_type, b.file_type));
 
