@@ -1,7 +1,6 @@
-use std::{collections::HashMap, fs};
-
 use csv::Writer;
 use heck::ToSnakeCase;
+use std::{collections::HashMap, fs};
 
 pub fn initialise_directory() {
     match fs::remove_dir_all("./gossip_generated") {
@@ -22,7 +21,12 @@ pub fn write_localisation_csv(localisation_map: HashMap<String, String>) {
     let mut writer = Writer::from_path("./gossip_generated/translation.csv")
         .expect(" Path \'./gossip_generated/translation.csv\' is invalid somehow.");
     writer.serialize(("key", "en")).unwrap();
-    for entry in localisation_map {
+
+    // Sort localisation entries to make them nicer to edit.
+    let mut entries: Vec<(&String, &String)> = localisation_map.iter().collect();
+    entries.sort_by(|(a, _), (b, _)| human_sort::compare(a, b));
+
+    for entry in entries {
         writer.serialize(&entry).expect(&format!(
             "Failed serializing entry ({}, {}).",
             entry.0, entry.1

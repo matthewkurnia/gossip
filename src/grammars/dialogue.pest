@@ -1,14 +1,15 @@
 WHITESPACE = _{ " " }
 COMMENT    = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
-identifier = ${ (CASED_LETTER | " ")+ }
-text       = ${ (CASED_LETTER | " " | PUNCTUATION)+ }
+identifier           = ${ (CASED_LETTER | " " | NUMBER)+ }
+text_allowed_symbols =  { "(" | ")" | ":" | "." | "," | "?" | "!" | "&" | "$" | "/" | "-" | "+" | "*" | "'" | "\"" | "%" }
+text                 = ${ (CASED_LETTER | " " | text_allowed_symbols | NUMBER)+ }
 
-bold_text   = { "@bold[" ~ text ~ "]" }
-italic_text = { "@italic[" ~ text ~ "]" }
-wave_text   = { "@wave[" ~ text ~ "]" }
-shake_text  = { "@text[" ~ text ~ "]" }
-styled_text = { (text | bold_text | italic_text | wave_text | shake_text)+ }
+bold_text   = ${ "@bold[" ~ text ~ "]" }
+italic_text = ${ "@italic[" ~ text ~ "]" }
+wave_text   = ${ "@wave[" ~ text ~ "]" }
+shake_text  = ${ "@shake[" ~ text ~ "]" }
+styled_text = ${ (bold_text | italic_text | wave_text | shake_text | text)+ }
 
 regular_line = { identifier ~ ":" ~ styled_text }
 

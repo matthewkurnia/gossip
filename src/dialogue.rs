@@ -17,20 +17,26 @@ pub enum Line {
     Func(String),
 }
 
-fn decorate(text: String, rule: Rule) -> String {
-    return match rule {
-        Rule::bold_text => format!("[b]{}[/b]", text),
-        Rule::italic_text => format!("[i]{}[/i]", text),
-        Rule::wave_text => format!("[wave amp=50.0 freq=5.0 connected=1]{{{}}}[/wave]", text),
-        Rule::shake_text => format!("[shake rate=20.0 level=5 connected=1]{{{}}}[/shake]", text),
-        _ => text,
+fn decorate(text: Pair<'_, Rule>) -> String {
+    return match text.as_rule() {
+        Rule::bold_text => format!("[b]{}[/b]", text.into_inner().last().unwrap().as_str()),
+        Rule::italic_text => format!("[i]{}[/i]", text.into_inner().last().unwrap().as_str()),
+        Rule::wave_text => format!(
+            "[wave amp=50.0 freq=5.0 connected=1]{{{}}}[/wave]",
+            text.into_inner().last().unwrap().as_str()
+        ),
+        Rule::shake_text => format!(
+            "[shake rate=20.0 level=5 connected=1]{{{}}}[/shake]",
+            text.into_inner().last().unwrap().as_str()
+        ),
+        Rule::text | _ => text.as_str().to_owned(),
     };
 }
 
 fn get_bbcode_text(styled_text: Pair<'_, Rule>) -> String {
     let mut bbcode_text = "".to_owned();
     for text in styled_text.into_inner() {
-        bbcode_text += &decorate(text.as_str().to_owned(), text.as_rule());
+        bbcode_text += &decorate(text);
     }
     return bbcode_text;
 }
@@ -122,15 +128,17 @@ pub fn get_dialogue(
                                 assert!(choice.len() == 2);
 
                                 let styled_text = choice.next().unwrap();
-                                let fragment_title = choice.next().unwrap();
+                                let target_fragment_title = choice.next().unwrap();
 
-                                if !fragment_titles.contains(fragment_title.as_str()) {
+                                if target_fragment_title.as_str() != "continue"
+                                    && !fragment_titles.contains(target_fragment_title.as_str())
+                                {
                                     panic!(
                                         "Error: {} contains a transition to a non-existent fragment! (\"{}\" at line {} col {})",
                                         file_path.to_string_lossy(),
-                                        fragment_title.as_str(),
-                                        fragment_title.line_col().0.to_string(),
-                                        fragment_title.line_col().1.to_string(),
+                                        target_fragment_title.as_str(),
+                                        target_fragment_title.line_col().0.to_string(),
+                                        target_fragment_title.line_col().1.to_string(),
                                     );
                                 }
 
@@ -143,7 +151,7 @@ pub fn get_dialogue(
 
                                 localisation_map
                                     .insert(localisation_key, get_bbcode_text(styled_text));
-                                choices.push((entry, fragment_title.as_str().to_owned()));
+                                choices.push((entry, target_fragment_title.as_str().to_owned()));
 
                                 choice_counter += 1;
                             }
